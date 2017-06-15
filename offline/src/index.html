@@ -1,0 +1,635 @@
+<html>
+
+  <head>
+
+    <title>EthOffline</title>
+
+  </head>
+
+  <body>
+
+    <style type="text/css">
+
+    body, html {
+      font-family: Arial;
+    }
+
+    label {
+      font-size: 14px;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+
+    input, textarea, select {
+      padding: 15px;
+      font-size: 14;
+      width: 100%;
+    }
+
+    .unitValue {
+      width: 85%;
+    }
+
+    .unitSelector, .dataKindSelector {
+      width: 14%;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    .scrollable {
+      overflow-y: scroll;
+      max-height: 100%;
+      height: 99%;
+    }
+
+    #result {
+      border: 1px solid #333;
+      padding: 20px;
+    }
+
+    </style>
+
+    <div style="margin: 0px auto; width: 50%; display: block;">
+
+      <h1>EthOffline | Transaction Signer</h1>
+
+      <h4>Welcome to EthOffline app. This tool can be used to sign Ethereum transactions on an Offline (Air-Gapped) computer.</h4>
+
+      <div id="privateKeyWrapper">
+
+        <br />
+
+        <label>Private Key</label> <br />
+        <input type="password" id="privatekey" placeholder="Example: 0xe230d63e82551f42a1d00ee75448e01f5370ba387998835415983144a46bd504" autofocus /> <br /> <br />
+
+        <small>
+          Please provide your Etheruem private key here, it must be hex '0x...' prefixed (this is not your Bip39 seed or passphrase).
+
+          A QR code will be prompted if you have entered a valid private key.
+
+          If your private key is valid, your private key data will be hidden to protect it from any cameras or devices.
+        </small>
+
+        <br /><br />
+
+        <small>
+
+          If your using Ian Coleman's Bip39 Tool, open that tool offline.
+
+          Enter your seed and passphrase, scroll down and copy your Private Key on the right hand side of the page, then paste it above.
+        </small>
+
+      </div>
+
+      <div id="transactionFields" style="display: none;">
+
+        <br /><br />
+
+        <label>From Address (your account address)</label> <br />
+        <input type="text" id="from" disabled="disabled" /> <br /> <br />
+
+        <br /><br />
+
+        <label>Nonce</label> <br />
+        <input type="number" id="nonce" placeholder="Example: 1" /> <br /> <br />
+
+        <label>Gas</label> <br />
+        <input type="number" id="gas" class="unitValue" placeholder="Example: 500000 [wei]" value="500000" />
+
+        <select id="gasUnit" class="unitSelector" data-target="gas">
+          <option value="wei" selected="selected">wei</option>
+
+          <option value="gwei">Gwei</option>
+
+          <option value="ether">ether</option>
+        </select>
+
+        <br /> <br />
+
+        <label>Gas Price</label> <br />
+        <input type="number" id="gasPrice" class="unitValue" placeholder="Example: 5 [gWei]" value="5" />
+
+        <select id="gasPriceUnit" class="unitSelector" data-target="gasPrice">
+          <option value="wei">wei</option>
+
+          <option value="gwei" selected="selected">Gwei</option>
+
+          <option value="ether">ether</option>
+        </select>
+
+        <div id="transactionDataWrapper" style="display: none;">
+
+          <br /> <br />
+
+          <br /> <br />
+
+          <label>To Address</label> <br />
+          <input type="text" id="to" placeholder="Example: 0x325e4f509e582cfeD31b767bc9F992f5b86f0e67" /> <br /> <br />
+
+          <label>Value</label> <br />
+          <input type="number" id="value" class="unitValue" placeholder="Example: 45 [ether]" value="0" />
+
+          <select id="valueUnit" class="unitSelector" data-target="value">
+            <option value="wei">wei</option>
+
+            <option value="gwei">Gwei</option>
+
+            <option value="ether" selected="selected">ether</option>
+          </select>
+
+          <br /> <br />
+
+          <br /> <br />
+
+          <label>Data</label> <br />
+
+          <select id="dataKind" class="dataKindSelector" style="width: 99%;">
+            <option value="noData">No Data</option>
+            <option value="custom">Custom Data (experts only)</option>
+            <option disabled></option>
+            <option disabled>Gnosis Multi-Signature Wallet</option>
+            <option value="submitTransaction">&nbsp;&nbsp;&nbsp;&nbsp;Submit Transaction</option>
+            <option value="confirmTransaction">&nbsp;&nbsp;&nbsp;&nbsp;Confirm Transaction</option>
+            <option disabled></option>
+            <option disabled>ERC20 Ethereum Standard Token</option>
+            <option value="transfer">&nbsp;&nbsp;&nbsp;&nbsp;Transfer</option>
+            <option value="transferFrom">&nbsp;&nbsp;&nbsp;&nbsp;Transfer From</option>
+            <option value="approve">&nbsp;&nbsp;&nbsp;&nbsp;Approve</option>
+          </select> <br />
+
+          <div id="dataWrapper">
+
+
+
+          </div>
+
+          <br />
+
+          <input type="hidden" id="data" placeholder="data" value="0x" /> <br /> <br />
+
+        </div>
+
+        <br /><br /><br /><br />
+
+        <input type="button" id="signTransaction" value="Sign Transaction" />
+
+      </div>
+
+
+      <br /><br />
+
+      <div id="result" style="display: none;"></div>
+
+      <div>
+        <br /><br />
+
+        <h2>WARNING</h2>
+
+        <h4>Only use this Tool Offline on a safe computer. This tool is not meant to handle private keys on a computer or mobile device connected to the internet.</h4>
+
+        <h2>License</h2>
+
+        <p>Please refer to the software license for more detail.</p>
+
+        <p>The software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.</p>
+
+        <h2>Offline Usage</h2>
+
+        <p>You can use this tool without having to be online.</p>
+
+        <p>In your browser, select file save-as, and save this page as a file.</p>
+
+        <p>Double-click that file to open it in a browser on any offline computer.</p>
+
+        <p>Alternatively, download the file from the repository - <a href="https://github.com/ethjs/ethjs.github.io" target="_blank">https://github.com/ethjs/ethjs.github.io</a></p>
+
+        <h2>Open-Source</h2>
+
+        <p>This project is <b>100% open-source code</b></p>
+
+        <p>Get the source code from the repository - <a href="https://github.com/ethjs/ethjs.github.io" target="_blank">https://github.com/ethjs/ethjs.github.io</a></p>
+
+        <br /><br />
+      </div>
+
+    </div>
+
+    <div id="signedTransactionDataWrapper" style="position: fixed; color: #666; z-index: 5000; top: 0px; bottom: 0px; right: 0px; left: 0px; display: none; background: rgba(0,0,0,1); text-align: center; padding-top: 30px;">
+
+      <div class="scrollable">
+
+        <h3>Raw Signed Transaction Data</h3>
+
+        <textarea id="rawSignedTransactionData" style="width: 500px;"></textarea>
+
+        <br /><br />
+
+        <h3>Signed Transaction Data</h3>
+
+        <textarea id="signedTransactionData" style="width: 500px;"></textarea>
+
+        <br /><br />
+
+        <canvas id="signedTransactionDataQRCode" width="500" height="500" style="width: 500px; height: 500px; display: inline-block;"></canvas>
+
+        <br /><br />
+
+        <h3 style="z-index: 10000; font-weight: normal;">Scan this QR code with: <span style="color: #F3F3F3;">https://ethjs-scanner.surge.sh</span> on Android/PC/Mac</h3>
+
+        <br /><br />
+
+        <button id="closeTransactionQRCodeQR" style="padding: 20px; cursor: pointer;"><h3>Hide Signed Transaction</h3></button>
+
+        <br /><br />
+
+      </div>
+
+    </div>
+
+    <div id="addressQRWrapper" style="position: fixed; z-index: 5000; color: #666; top: 0px; bottom: 0px; right: 0px; left: 0px; display: none; background: rgba(0,0,0,1); text-align: center;">
+
+      <div class="scrollable">
+
+        <h3 style="z-index: 10000; margin-top: 100px;" id="addressValue"></h3>
+
+        <br /><br />
+
+        <canvas id="addressQR" width="500" height="500" style="width: 500px; z-index: 10000; height: 500px; display: inline-block;"></canvas>
+
+        <br /><br />
+
+        <h3 style="z-index: 10000; font-weight: normal;">Scan this QR code with: <span style="color: #F3F3F3;">https://ethjs-scanner.surge.sh</span> on Android/PC/Mac</h3>
+
+        <br /><br />
+
+        <button id="closeAddressQR" style="padding: 20px; cursor: pointer;"><h3>I know my <b>Nonce</b> and <b>Gas Values</b></h3></button>
+
+        <br /><br />
+
+      </div>
+
+    </div>
+
+    <script src="ethjs-abi.js"></script>
+
+    <script src="abi.js"></script>
+
+    <script src="qrious.js"></script>
+
+    <script src="ethjs-account.js"></script>
+
+    <script src="ethjs-signer.js"></script>
+
+    <script src="ethjs.js"></script>
+
+    <script type="text/javascript">
+    (function(){
+
+    const abiData = window.abiJSONData;
+
+    function el(query) {
+      return document.querySelector(query);
+    }
+
+    function handleValue(value) {
+      return String(value).trim().toLowerCase();
+    }
+
+    function isNumericNumber(numberValue) {
+      return String(numberValue).match("[0-9]+");
+    }
+
+    function result(val) {
+      el('#result').style.display = 'block';
+      el('#result').innerHTML = val;
+      el('#valueUnit').scrollIntoView();
+    }
+
+    function padToEven(str) {
+      return str.length % 2 ? `0${str}` : str;
+    }
+
+    function formatNumberData(rawStringBase10Number) {
+      return '0x' + padToEven((new Eth.BN(rawStringBase10Number, 10)).toString('hex'));
+    }
+
+
+    function drawInputNumber(name, type, inputID) {
+      el('#dataWrapper').innerHTML += `
+         <br /> <br />
+
+        <label>${name} (${type})</label> <br />
+        <input type="number" id="input_${inputID}" class="unitValue" placeholder="" value="0" />
+
+        <select id="input_${inputID}_format" class="unitSelector" data-target="input_${inputID}">
+          <option value="wei">no formatting</option>
+
+          <option value="wei">wei</option>
+
+          <option value="gwei">Gwei</option>
+
+          <option value="ether">ether</option>
+        </select>
+      `;
+    }
+
+    function placeholder(type) {
+      if (type.indexOf('byte') !== -1) {
+        return 'Exmaple: 0x00';
+      }
+
+      if (type.indexOf('address') !== -1) {
+        return 'Example: 0xbf8b454Fd4962317dbe3A534058Ab5b533e28524';
+      }
+    }
+
+    function drawInputText(name, type, inputID) {
+      const valueData = type.indexOf('byte') !== -1 ? '0x' : '';
+
+      el('#dataWrapper').innerHTML += `
+         <br /> <br />
+
+        <label>${name} (${type})</label> <br />
+        <input type="text" id="input_${inputID}" placeholder="${placeholder(type)}" value="${valueData}" />
+      `;
+    }
+
+
+    function drawInput(name, type, inputID) {
+      if (String(type).indexOf('int') !== -1) {
+        drawInputNumber(name, type, inputID);
+      } else {
+        drawInputText(name, type, inputID);
+      }
+    }
+
+    function filterABI(rawAbi, methodName) {
+      return rawAbi.filter(function(methodObject){
+        if (methodObject.name === methodName) { return methodObject; }
+      })[0];
+    }
+
+    function drawInputs(contractName, methodName) {
+      const methodABIObject = filterABI(abiData[contractName].abi, methodName);
+
+      methodABIObject.inputs.forEach(function(inputObject, inputIndex) {
+        drawInput(inputObject.name, inputObject.type, inputIndex);
+      });
+
+      buildUnitSelectors();
+    }
+
+    function transactionContract(dataKind) {
+      if (dataKind === 'submitTransaction' || dataKind === 'confirmTransaction') {
+        return 'multiSigDailyLimit';
+      }
+
+      if (dataKind === 'transfer' || dataKind === 'transferFrom' || dataKind === 'approve') {
+        return 'token';
+      }
+    }
+
+
+    function dataKindChange(eventValue) {
+      const dataKind = eventValue.target.value;
+      el('#dataWrapper').innerHTML = '';
+      el('#data').value = '--';
+      el('#data').type = 'hidden';
+
+      if (dataKind === 'noData') {
+        el('#data').value = '0x';
+        return;
+      }
+
+      if (dataKind === 'custom') {
+        el('#data').type = 'text';
+        el('#data').value = '0x';
+        return;
+      }
+
+      drawInputs(transactionContract(dataKind), dataKind);
+      return;
+    }
+
+    function selectNewUnit(eventValue) {
+      const unitSelected = eventValue.target.value;
+      const targetEl = el(`#${eventValue.target.dataset.target}`);
+      targetEl.value = '';
+    }
+
+    function buildUnitSelector(selectorEl) {
+      selectorEl.addEventListener('change', selectNewUnit);
+    }
+
+    function buildUnitSelectors() {
+      document.querySelectorAll('.unitSelector').forEach(buildUnitSelector);
+    }
+
+    function openAddressQRCode(eventValue) {
+      const privateKey = handleValue(eventValue.target.value);
+
+      if (!Eth.isHexString(privateKey, 32) || privateKey.length === 0) {
+        result('Error while processing private key: your private key is not a 64 byte hex prefixed (0x...) Ethereum private key.');
+        return;
+      }
+
+      const address = ethAccount.privateToAccount(privateKey).address;
+
+      const signedAddressQRCode = new QRious({
+        element: document.getElementById('addressQR'),
+        size: 500,
+        value: address,
+      });
+
+      el('#from').value = address;
+      el('#addressValue').innerHTML = address;
+      el('#privateKeyWrapper').style.display = 'none';
+      el('#result').style.display = 'none';
+      el('#transactionFields').style.display = 'block';
+      el('#addressQRWrapper').style.display = 'block';
+    }
+
+    function closeAddressQRCode() {
+      el('#addressQRWrapper').style.display = 'none';
+    }
+
+    function closeTransactionQRCode() {
+      el('#signedTransactionDataWrapper').style.display = 'none';
+    }
+
+    function openTransactionDataWrapper() {
+      el('#transactionDataWrapper').style.display = 'block';
+    }
+
+    function checkDataForErrors(privateKey, to, value, gas, gasPrice, nonce, data) {
+      if (!Eth.isHexString(privateKey, 32) || privateKey.length === 0) {
+        return 'Private key must be a 64 byte hex prefix hex string.';
+      }
+
+      if (!isNumericNumber(nonce) || nonce.length === 0) {
+        return 'The "Nonce" must be numeric and is required';
+      }
+
+      if (!isNumericNumber(gas) || gas.length === 0 || gas === '0') {
+        return 'The "Gas Value" must be numeric and is required.';
+      }
+
+      if (!isNumericNumber(gasPrice) || gasPrice.length === 0 || gasPrice === '0') {
+        return 'The "Gas Price" must be numeric and is required.';
+      }
+
+      if (!Eth.isAddress(to) || to.length === 0) {
+        return 'Your transaction "To Address" must be a hex prefixed Ethereum address and is required.';
+      }
+
+      if (!isNumericNumber(value) || value.length === 0) {
+        return 'Your transaction "Value" must be numeric.';
+      }
+
+      if (!Eth.isHexString(data)) {
+        return 'Data must be a hex prefix hex string.';
+      }
+
+      return null;
+    }
+
+    function checkBasicSignedTxErrors(signedTransactionData) {
+      if (signedTransactionData.length < 0) {
+        return 'The signed transaction data is malformed and cannot be nothin or so small in length.';
+      }
+
+      return null;
+    }
+
+    function formatTransactionData(rawData) {
+      return JSON.stringify(Object.assign({}, {
+        to: rawData.to,
+        value: formatNumberData(rawData.value),
+        gas: formatNumberData(rawData.gas),
+        gasPrice: formatNumberData(rawData.gasPrice),
+        nonce: formatNumberData(rawData.nonce),
+        data: rawData.data,
+      }), null, 2);
+    }
+
+    function showSignedTransactionData(signedTxData, rawSignedTxData) {
+      result('Transaction successfully signed.');
+      el('#rawSignedTransactionData').innerHTML = '';
+      el('#signedTransactionData').innerHTML = '';
+      el('#signedTransactionDataWrapper').style.display = 'block';
+      el('#signedTransactionData').innerHTML = signedTxData;
+      el('#rawSignedTransactionData').innerHTML = formatTransactionData(rawSignedTxData);
+      el('#signedTransactionDataQRCode').scrollIntoView();
+
+      const signedTransactionQRCode = new QRious({
+        element: document.getElementById('signedTransactionDataQRCode'),
+        size: 500,
+        value: signedTxData,
+      });
+    }
+
+    function transactionData() {
+      try {
+        const dataKind = el('#dataKind').value;
+        const dataContract = transactionContract(dataKind);
+
+        if (dataKind === 'noData') {
+          return '0x';
+        }
+
+        if (dataKind === 'custom') {
+          return handleValue(el('#data').value);
+        }
+
+        const methodObject = filterABI(abiData[dataContract].abi, dataKind);
+
+        const inputs = methodObject.inputs.map(function(inputObject, inputIndex){
+          if (inputObject.type.indexOf('int') !== -1) {
+            return Eth.toWei(el(`#input_${inputIndex}`).value, el(`#input_${inputIndex}_format`).value).toString(10);
+          } else {
+            return el(`#input_${inputIndex}`).value;
+          }
+        });
+
+        return ethAbi.encodeMethod(methodObject, inputs);
+      } catch (txError) {
+        result(`There was an error while processing your transaction data: ${txError} ${txError.value}`);
+      }
+    }
+
+    function signTransaction() {
+      try {
+        const privateKey = handleValue(el('#privateKey').value);
+        const to = handleValue(el('#to').value);
+
+        const valueUnit = handleValue(el('#valueUnit').value);
+        const value = Eth.toWei(handleValue(el('#value').value), valueUnit).toString(10);
+
+        const gasUnit = handleValue(el('#gasUnit').value);
+        const gas = Eth.toWei(handleValue(el('#gas').value), gasUnit).toString(10);
+
+        const gasPriceUnit = handleValue(el('#gasPriceUnit').value);
+        const gasPrice = Eth.toWei(handleValue(el('#gasPrice').value), gasPriceUnit).toString(10);
+
+        const nonce = handleValue(el('#nonce').value);
+        const data = transactionData();
+
+        if (!data) { return; }
+
+        const dataError = checkDataForErrors(privateKey, to, value, gas, gasPrice, nonce, data);
+
+        if (dataError) {
+          result('Error with transaction data: ' + String(dataError));
+          return;
+        } else {
+          const rawTransactionData = {
+            to: to,
+            value: new Eth.BN(value, 10),
+            gas: new Eth.BN(gas, 10),
+            gasPrice: new Eth.BN(gasPrice, 10),
+            nonce: new Eth.BN(nonce, 10),
+            data: data,
+          };
+          const signedTxData = ethSigner.sign(Object.assign({}, rawTransactionData), privateKey);
+
+          const basicSignedTxDataErrors = checkBasicSignedTxErrors(signedTxData);
+
+          if (basicSignedTxDataErrors) {
+            result('Error with signed transaction data: ' + String(basicSignedTxDataErrors));
+            return;
+          }
+
+          showSignedTransactionData(signedTxData, rawTransactionData);
+        }
+
+      } catch (transactionError) {
+        result('Error while processing transaction data: ' + String(transactionError));
+        return;
+      }
+    }
+
+    function load() {
+      el('#dataKind').addEventListener('click', dataKindChange);
+
+      el('#signTransaction').addEventListener('click', signTransaction);
+      el('#closeAddressQR').addEventListener('click', closeAddressQRCode);
+      el('#closeTransactionQRCodeQR').addEventListener('click', closeTransactionQRCode);
+
+      el('#nonce').addEventListener('change', openTransactionDataWrapper);
+      el('#nonce').addEventListener('keyup', openTransactionDataWrapper);
+
+      el('#privateKey').addEventListener('change', openAddressQRCode);
+      el('#privateKey').addEventListener('keyup', openAddressQRCode);
+
+      buildUnitSelectors();
+    }
+
+    window.addEventListener('load', load);
+
+    })();
+    </script>
+
+  </body>
+
+</html>
