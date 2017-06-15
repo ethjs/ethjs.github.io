@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Scanner</title>
+  </head>
+  <body>
+
+    <style type="text/css">
+
+    body, html {
+      padding: 0px;
+      margin: 0px;
+      height: 100%;
+      width: 100%;
+      font-family: Arial;
+    }
+
+    label {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 10px;
+      display: block;
+      margin-bottom: 10px;
+    }
+
+    input, textarea {
+      padding: 15px;
+      font-size: 14;
+      width: 100%;
+    }
+
+    .dataSpan {
+      display: inline-block;
+      font-size: 15px;
+      border: 1px solid #777;
+      padding: 20px;
+      width: 100%;
+      margin-bottom: 20px;
+      word-wrap: break-word;
+    }
+
+    .warning {
+        color: darkred;
+        border-color: darkred;
+    }
+
+    .well {
+      padding: 20px;
+
+      background: #F1F1F1;
+
+      border: 1px solid #666;
+
+      word-wrap: break-word;
+    }
+
+    #preview {
+      display: none;
+      position: fixed;
+      top: 0%;
+      left: 0%;
+      min-width: 100%;
+      min-height: 100%;
+      width: auto;
+      height: auto;
+      z-index: 5000;
+    }
+    </style>
+
+    <video id="preview" class="videoQRCode"></video>
+
+    <div style="width: 75%; margin: 0px auto; display: block; padding-top: 50px;">
+      <h1 id="scannerHeader">EthScanner | Transaction Scanner</h1>
+
+      <button id="scanQR" style="margin: 0px auto; margin-top: 100px; padding: 100px; font-size: 30px; display: block;">Scan QR Code</button>
+
+      <button id="dump" style="margin: 0px auto; margin-top: 50px; padding: 100px; font-size: 30px; display: none;">Broadcast Transaction to Mainnet</button>
+
+      <br /><br />
+
+      <br /><br />
+
+      <div id="result2"></div>
+
+      <br /><br />
+
+      <div id="result"></div>
+
+      <br /><br />
+
+      <div id="testSignedTransaction">
+
+        <h2>Test Signed Transaction</h2>
+
+        <canvas id="qr" width="500" height="500" style="width: 500px; height: 500px; display: block;"></canvas>
+
+      </div>
+
+      <button id="scanQR2" style="margin: 0px auto; margin-top: 100px; padding: 100px; font-size: 30px; display: none;">Scan QR Code</button>
+
+      <br /><br />
+      <br /><br />
+
+      <h2>License</h2>
+
+      <p>Please refer to the software license for more detail.</p>
+
+      <p>The software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.</p>
+
+      <h2>Open-Source</h2>
+
+      <p>This project is <b>100% open-source code</b></p>
+
+      <p>Get the source code from the repository - <a href="https://github.com/ethjs/ethjs.github.io" target="_blank">https://github.com/ethjs/ethjs.github.io</a></p>
+
+      <br /><br />
+
+    </div>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/es6-shim/0.35.3/es6-shim.min.js"></script>
+
+    <script type="text/javascript" src="instascan.min.js"></script>
+
+    <script type="text/javascript" src="ethjs.min.js"></script>
+
+    <script type="text/javascript" src="qrious.min.js"></script>
+
+    <script type="text/javascript" src="ethereumjs-accounts.js"></script>
+
+    <script type="text/javascript">
+    (function(){
+      var signedTx = '';
+      var scanner = null;
+      const eth = new Eth(new Eth.HttpProvider('https://mainnet.infura.io'));
+      const Buffer = window.Eth.Buffer;
+      const content = '0xf86801850ba43b7400833d0900949a78a8e9f560204bd23ea281dd8be06bfdab518c83044164801ca047894b274f953a2eeb7208ff61ac0d651d785ce56ab16b36e2a3136cec8a3bfda03157d3e24e23a7f838bb22649e309426c2474eb3acf38294e53e3744c01f01bd';
+
+      function el(query) {
+        return document.querySelector(query);
+      }
+
+      function toBuffer(uint8) {
+        return `0x${uint8.toString('hex')}`;
+      }
+
+      function toNumber(uint8) {
+        return (new Eth.BN(uint8.toString('hex'), 16)).toString(10);
+      }
+
+      function toEtherscanAddressLink(addr) {
+        return `<a href="https://etherscan.io/address/${addr}" target="_blank">${addr}</a>`
+      }
+
+      function toEtherscanTxLink(addr) {
+        return `<a href="https://etherscan.io/tx/${addr}" target="_blank">${addr}</a>`
+      }
+
+      function dumpEthereumSignedTransaction() {
+        if (signedTx.length === 0) {
+          el('#result2').innerHTML = `You must scan a signed Ethereum transaction before dumping.`;
+          return;
+        }
+
+        if (!confirm("Are you sure you want to broadcast this transaction to the Ethereum network?")) {
+          return;
+        }
+
+        eth.sendRawTransaction(signedTx, function(err, result) {
+          if (err) {
+            el('#result2').innerHTML = `Error: ${err}`;
+            return;
+          }
+
+          el('#result2').innerHTML = `Tx Hash: ${toEtherscanTxLink(result)} <br /> with transaction data: <span class="dataSpan">${signedTx}</span>`;
+          return;
+        });
+      }
+
+      function validateAccountNonce(tx) {
+        eth.getTransactionCount(toBuffer(tx.from), function(accountNonceError, accountNonceCount) {
+          const nonceValidityEl = el('#nonceValidity');
+          const signedTxNonceCount = new Eth.BN(toNumber(tx.nonce), 10);
+
+          if (!nonceValidityEl) {
+            return;
+          }
+
+          if (accountNonceError) {
+            nonceValidityEl.style.display = 'block';
+            nonceValidityEl.innerHTML = `${accountNonceError} ${accountNonceError.value}  <br />`;
+            return;
+          }
+
+          const isValidNonce = accountNonceCount.eq(signedTxNonceCount);
+
+          if (!isValidNonce) {
+            nonceValidityEl.style.display = 'block';
+            nonceValidityEl.innerHTML = `Warning:
+            <br /> The account nonce specified for this transaction is invalid.
+            <br />
+            <br />
+            The actual account nonce should be:
+            <br />
+            <b>${accountNonceCount.toString(10)}</b>
+            <hr />
+            Please change your account nonce then re-scan.
+            <br />`;
+          } else {
+            nonceValidityEl.style.display = 'none';
+          }
+        });
+      }
+
+      function toEther(weiValue) {
+        return Eth.fromWei(weiValue, 'ether').toString(10);
+      }
+
+      function validateAccountBalance(tx) {
+        eth.getBalance(toBuffer(tx.from), function(accountBalanceError, accountBalance) {
+          const balanceValidityEl = el('#balanceValidity');
+          const value = new Eth.BN(toNumber(tx.value));
+          const gasPrice = new Eth.BN(toNumber(tx.gasPrice));
+          const gasLimit = new Eth.BN(toNumber(tx.gasLimit));
+          const gasCost = gasPrice.mul(gasLimit).add(value);
+          const validGasValue = accountBalance.gte(gasCost);
+
+          if (!balanceValidityEl) {
+            return;
+          }
+
+          if (accountBalanceError) {
+            balanceValidityEl.style.display = 'block';
+            balanceValidityEl.innerHTML = `${accountBalanceError} ${accountBalanceError.value}  <br />`;
+            return;
+          }
+
+          if (!validGasValue) {
+            balanceValidityEl.style.display = 'block';
+            balanceValidityEl.innerHTML = `Warning:
+            <br />
+            The account does not have enough balance to send this transaction.
+            <br />
+            Your current balance is:
+            <br />
+            ${toEther(accountBalance)} ether
+            <br />
+            <br />
+            The amount required to send this transaction is:
+            <b>${toEther(gasCost)} ether</b>
+            <hr />
+            Please either add funds to the account or lower your gas price, limit or value.
+            <br />`;
+          } else {
+            balanceValidityEl.style.display = 'none';
+          }
+        });
+      }
+
+      function openPreview() {
+        el('#preview').style.display = 'block';
+        el('#preview').scrollIntoView();
+      }
+
+      function closePreview() {
+        el('#preview').style.display = 'none';
+      }
+
+      function showSignedTransactionData(tx) {
+        el('#result').innerHTML = `<h3>
+          <div id="confirmMessage"></div>
+
+          Please confirm your transaction details below: <br /> <br />
+          <label>From</label> <span class="dataSpan">${toEtherscanAddressLink(toBuffer(tx.from))}</span> <br />
+          <span class="dataSpan warning" id="balanceValidity"></span>
+
+          <br /> <br />
+
+          <label>Nonce</label>  <span class="dataSpan">${toNumber(tx.nonce)}</span> <br />
+          <span class="dataSpan warning" id="nonceValidity"></span>
+          <label>Gas Limit</label>  <span class="dataSpan">${toNumber(tx.gasLimit)} wei</span> <br />
+          <label>Gas Price</label>  <span class="dataSpan">${Eth.fromWei(toNumber(tx.gasPrice), 'gwei').toString(10)} Gwei</span> <br />
+
+          <br /> <br />
+
+          <label>To</label>  <span class="dataSpan">${toEtherscanAddressLink(toBuffer(tx.to))}</span> <br />
+          <label>Value</label>  <span class="dataSpan">${Eth.fromWei(toNumber(tx.value), 'ether').toString(10)} ether</span>
+          <label>Data</label>  <span class="dataSpan">${toBuffer(tx.data)}</span>
+
+          <br /> <br />
+
+          <label>Homestead</label>  <span class="dataSpan">${tx._homestead}</span> <br />
+          <label>V</label>  <span class="dataSpan">${toNumber(tx.v)}</span> <br />
+          <label>R</label>  <span class="dataSpan">${toBuffer(tx.r)}</span> <br />
+          <label>S</label>  <span class="dataSpan">${toBuffer(tx.s)}</span> <br />
+          <label>Serialized></label> <span class="dataSpan">0x${tx.serialize().toString('hex')}</span> <br />
+        </h3>`;
+
+        closePreview();
+
+        el('#dump').style.display = 'inline-block';
+        el('#testSignedTransaction').style.display = 'none';
+        el('#scanQR').style.display = 'none';
+
+        el('#scannerHeader').scrollIntoView();
+
+        scanner.stop();
+
+        validateAccountNonce(tx);
+        validateAccountBalance(tx);
+      }
+
+      function loadAddressNonce(address) {
+        eth.getTransactionCount(address, function(nonceError, nonceCount){
+          if (nonceError) {
+            el('#addressNonce').innerHTML = `There was an error while loading your account nonce: ${nonceError} ${nonceError.value}`;
+            return;
+          }
+
+          el('#addressNonce').innerHTML = nonceCount.toString(10);
+        });
+      }
+
+      function loadAddressBalance(address) {
+        eth.getBalance(address, function(balanceError, balanceAmount){
+          if (balanceError) {
+            el('#addressBalance').innerHTML = `There was an error while loading your account balance ${balanceError} ${balanceError.value}`;
+            return;
+          }
+
+          el('#addressBalance').innerHTML = `${Eth.fromWei(balanceAmount, 'ether').toString(10)} ether`;
+        });
+      }
+
+      function hideTestQRCode() {
+        el('#testSignedTransaction').style.display = 'none';
+      }
+
+      function showAddressData(address) {
+        el('#result').innerHTML = `<h2 style="font-weight: normal;" id="addressData">
+          <label>Your Address</label>
+
+          <div class="well" id="scannedAddress">${address}</div>
+
+          <br /><br />
+
+          <label>Your Nonce is: </label>
+
+          <div class="well" id="addressNonce">
+
+            loading..
+
+          </div>
+
+          <br /><br />
+
+          <p><b>Recommended Gas Values</b></p>
+
+          <label><underline>Higher</underline> (for contract transactions e.g. MultiSig or Tokens)</label>
+
+          <div class="well">
+
+            <p>Gas</p>
+            <h1>1000000 wei</h1>
+
+            <p>Gas Price</p>
+            <h1><b>5 Gwei</b></h1>
+
+          </div>
+
+          <br />
+
+          <label><underline>Lower</underline> (for basic transactions e.g. not with contracts)</label>
+
+          <div class="well">
+
+            <p>Gas</p>
+            <h1>300000 wei</h1>
+
+            <p style="font-weight: normal;">Gas Price</p>
+            <h1><b>4 Gwei</b></h1>
+
+          </div>
+
+          <br /><br />
+
+          <label>Your Balance is:</label>
+
+          <br />
+
+          <div class="well" id="addressBalance">loading..</div> <br />
+        </h2>`;
+
+        el('#addressData').scrollIntoView();
+        el('#scanQR2').style.display = 'inline-block';
+
+        closePreview();
+
+        loadAddressNonce(address);
+        loadAddressBalance(address);
+      }
+
+      function onSuccessfulQRCodeScan(content) {
+        try {
+          if (Eth.isAddress(content)) {
+            showAddressData(content);
+          } else {
+            signedTx = content;
+            const tx = new EthTx(content);
+
+            showSignedTransactionData(tx);
+          }
+
+          hideTestQRCode();
+          closePreview();
+        } catch (error) {
+          el('#result').innerHTML = `Error while processing signed transaction data.. <br /> ${error} <br /> ${content}`;
+        }
+      }
+
+      function openScanQR() {
+        openPreview();
+
+        const scannerOptions = {
+          video: el('#preview'),
+          continuous: true,
+          refractoryPeriod: 5000,
+        };
+        scanner = new Instascan.Scanner(scannerOptions);
+        scanner.addListener('scan', onSuccessfulQRCodeScan);
+
+        Instascan.Camera.getCameras()
+        .then(onCameraLoad)
+        .catch(function (e) {
+          el('#result').innerHTML = `Error while getting hardware cameras.. <br /> ${error} <br /> while loading camera: ${e}.`;
+        });
+      }
+
+      function onCameraLoad(cameras) {
+        if (cameras.length > 0) {
+          scanner.start(cameras[cameras.length > 1 ? 1 : 0]);
+        } else {
+          el('#result').innerHTML = `Error while loading the camera.. <br /> ${error} <br /> No cameras found on hardware device.`;
+        }
+      }
+
+      function load() {
+        const qr = new QRious({
+          element: el('#qr'),
+          size: 500,
+          value: content,
+        });
+
+        el('#scanQR').addEventListener('click', openScanQR);
+        el('#scanQR2').addEventListener('click', openScanQR);
+        el('#dump').addEventListener('click', dumpEthereumSignedTransaction);
+      }
+
+      window.addEventListener('load', load);
+    })();
+    </script>
+  </body>
+</html>
