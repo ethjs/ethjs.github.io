@@ -48,13 +48,29 @@
       padding: 20px;
     }
 
+    #onlineWarning {
+      padding: 20px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+      color: darkred;
+      border: 1px solid darkred;
+    }
+
     </style>
 
     <div style="margin: 0px auto; width: 50%; display: block;">
 
       <h1>EthOffline | Transaction Signer</h1>
 
-      <h4>Welcome to EthOffline app. This tool can be used to sign Ethereum transactions on an Offline (Air-Gapped) computer.</h4>
+      <h4>Welcome to EthOffline app, offline Ethereum transaction signing tool.</h4>
+
+      <div id="onlineWarning">
+        WARNING: You are currently online and connected to the internet. This tool is meant to be used on an offline (preferably air-gapped computer.).
+
+        <br /><br />
+
+        Do not use this tool with your actual private keys while connected to the internet.
+      </div>
 
       <div id="privateKeyWrapper">
 
@@ -75,7 +91,7 @@
 
         <small>
 
-          If your using Ian Coleman's Bip39 Tool, open that tool offline.
+          If you're using Ian Coleman's Bip39 Tool, open that tool offline.
 
           Enter your seed and passphrase, scroll down and copy your Private Key on the right hand side of the page, then paste it above.
         </small>
@@ -193,6 +209,14 @@
         <p>Please refer to the software license for more detail.</p>
 
         <p>The software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose and noninfringement. In no event shall the authors or copyright holders be liable for any claim, damages or other liability, whether in an action of contract, tort or otherwise, arising from, out of or in connection with the software or the use or other dealings in the software.</p>
+
+        <h2>About</h2>
+
+        <h4>This tool is produced by the EthJS team using EthJS libraries. Please contact the ethereumjs community for more details.</h4>
+
+        <h2>Hash Verification</h2>
+
+        <h4>Please verify this tool by using a sha256sum and checking the release information at: https://github.com/ethjs/ethjs.github.io/releases.</h4>
 
         <h2>Offline Usage</h2>
 
@@ -609,6 +633,16 @@
       }
     }
 
+    function onlineWarning() {
+      el('#onlineWarning').style.display = 'block';
+    }
+
+    function status() {
+      if (navigator.onLine) {
+        onlineWarning();
+      }
+    }
+
     function load() {
       el('#dataKind').addEventListener('click', dataKindChange);
 
@@ -625,6 +659,9 @@
       buildUnitSelectors();
     }
 
+    status();
+
+    window.addEventListener('online',  onlineWarning);
     window.addEventListener('load', load);
 
     })();
