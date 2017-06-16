@@ -643,6 +643,20 @@
       }
     }
 
+    function attemptBasicGoogleConnection(callback){
+      try {
+        const xmlhttp = new XMLHttpRequest();
+        xmlhttp.onreadystatechange = function(){
+          if (xmlhttp.readyState == 4 && xmlhttp.status == 200){
+            callback();
+          }
+        }
+        xmlhttp.open("GET", 'http://google.com', true);
+        xmlhttp.send();
+      } catch (error) {
+      }
+    }
+
     function load() {
       el('#dataKind').addEventListener('click', dataKindChange);
 
@@ -659,9 +673,8 @@
       buildUnitSelectors();
     }
 
-    status();
+    attemptBasicGoogleConnection(onlineWarning);
 
-    window.addEventListener('online',  onlineWarning);
     window.addEventListener('load', load);
 
     })();
